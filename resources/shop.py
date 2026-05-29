@@ -13,6 +13,7 @@ blueprint = Blueprint("shops", __name__, description="Operations on shops")
 
 @blueprint.route("/shops/<shop_id>")
 class Shop(MethodView):
+    @blueprint.response(HTTPStatus.OK, ShopSchema)
     def get(self, shop_id):
         try:
             return shops[shop_id], HTTPStatus.OK
@@ -29,16 +30,16 @@ class Shop(MethodView):
 
 @blueprint.route("/shop")
 class ShopList(MethodView):
+    @blueprint.response(HTTPStatus.OK, ShopSchema(many=True))
     def get(self):
         return {"shops": list(shops.values())}
 
-    def post(self):
-        shop_data = request.json
-        if "name" not in shop_data:
-            abort(400, message="Please make sure 'name' is in the request")
+    @blueprint.arguments(ShopSchema)
+    @blueprint.response(HTTPStatus.CREATED, ShopSchema)
+    def post(self, shop_data):
         for shop in shops.values():
             if shop["name"] == shop_data["name"]:
-                abort(400, message="Shop already exists")
+                abort(HTTPStatus.BAD_REQUEST, message="Shop already exists")
         shops_id = uuid.uuid4().hex
         shop = {**shop_data, "id": shops_id}
         shops[shops_id] = shop

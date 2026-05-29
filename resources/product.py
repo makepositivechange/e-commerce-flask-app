@@ -13,13 +13,16 @@ blueprint = Blueprint("products", __name__, description="Operations on products"
 
 @blueprint.route("/product/<product_id>")
 class Product(MethodView):
+    @blueprint.response(HTTPStatus.OK, ProductSchema)
     def get(self, product_id):
         try:
             return products[product_id], HTTPStatus.OK
         except KeyError:
             abort(HTTPStatus.NOT_FOUND, message="Product not found")
 
+    # Please be careful when we have this decorator as the order is very important
     @blueprint.arguments(ProductUpdateSchema)
+    @blueprint.response(HTTPStatus.OK, ProductSchema)
     def put(self, product_data, product_id):
         try:
             product = products[product_id]
@@ -39,10 +42,12 @@ class Product(MethodView):
 
 @blueprint.route("/product")
 class Products(MethodView):
+    @blueprint.response(HTTPStatus.OK, ProductSchema(many=True))
     def get(self):
         return {"products": list(products.values())}
 
     @blueprint.arguments(ProductSchema)
+    @blueprint.arguments(HTTPStatus.OK, ProductSchema)
     def post(self, new_product):
         for product in products.values():
             if (
