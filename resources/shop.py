@@ -1,12 +1,11 @@
 import uuid
 from http import HTTPStatus
 
-from flask import request  # pyright: ignore
 from flask.views import MethodView  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
 
 from db import shops
-from schema import ShopSchema, ShopUpdateSchema
+from schema import ShopSchema
 
 blueprint = Blueprint("shops", __name__, description="Operations on shops")
 

@@ -1,7 +1,6 @@
 import uuid
 from http import HTTPStatus
 
-from flask import request  # pyright: ignore
 from flask.views import MethodView  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
 
