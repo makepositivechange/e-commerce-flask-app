@@ -1,0 +1,45 @@
+import uuid
+from http import HTTPStatus
+
+from flask import request  # pyright: ignore
+from flask.views import MethodView  # pyright: ignore
+from flask_smorest import Blueprint, abort  # pyright: ignore
+
+from db import shops
+from schema import ShopSchema, ShopUpdateSchema
+
+blueprint = Blueprint("shops", __name__, description="Operations on shops")
+
+
+@blueprint.route("/shops/<shop_id>")
+class Shop(MethodView):
+    def get(self, shop_id):
+        try:
+            return shops[shop_id], HTTPStatus.OK
+        except KeyError:
+            abort(404, message="Shop not found")
+
+    def delete(self, shop_id):
+        try:
+            del shops[shop_id]
+            return {"message": "shop deleted"}, HTTPStatus.OK
+        except KeyError:
+            abort(404, message="Shop not found")
+
+
+@blueprint.route("/shop")
+class ShopList(MethodView):
+    def get(self):
+        return {"shops": list(shops.values())}
+
+    def post(self):
+        shop_data = request.json
+        if "name" not in shop_data:
+            abort(400, message="Please make sure 'name' is in the request")
+        for shop in shops.values():
+            if shop["name"] == shop_data["name"]:
+                abort(400, message="Shop already exists")
+        shops_id = uuid.uuid4().hex
+        shop = {**shop_data, "id": shops_id}
+        shops[shops_id] = shop
+        return {"shop": shop}, HTTPStatus.CREATED
