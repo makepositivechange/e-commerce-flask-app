@@ -3,7 +3,7 @@ import os
 from flask import Flask  # pyright: ignore
 from flask_smorest import Api  # pyright: ignore
 
-import models
+import models  # noqa: F401
 from db import db
 from resources.product import blueprint as ProductBlueprint
 from resources.shop import blueprint as ShopBlueprint
