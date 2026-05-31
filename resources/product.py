@@ -1,10 +1,11 @@
-import uuid
 from http import HTTPStatus
 
 from flask.views import MethodView  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError  # pyright: ignore
 
-from db import products
+from db import db
+from models import ProductModel
 from schema import ProductSchema, ProductUpdateSchema
 
 blueprint = Blueprint("products", __name__, description="Operations on products")
@@ -14,50 +15,56 @@ blueprint = Blueprint("products", __name__, description="Operations on products"
 class Product(MethodView):
     @blueprint.response(HTTPStatus.OK, ProductSchema)
     def get(self, product_id):
-        try:
-            return products[product_id], HTTPStatus.OK
-        except KeyError:
-            abort(HTTPStatus.NOT_FOUND, message="Product not found")
+        product = ProductModel.query.get_or_404(product_id)
+        return product
 
     # Please be careful when we have this decorator as the order is very important
     @blueprint.arguments(ProductUpdateSchema)
     @blueprint.response(HTTPStatus.OK, ProductSchema)
     def put(self, product_data, product_id):
+        product = ProductModel.query.get_or_404(product_id)
+        if product:
+            product.price = product_data["price"]
+            product.name = product_data["name"]
+        else:
+            product = ProductModel(id=product_id, **product_data)
         try:
-            product = products[product_id]
-            # | -> merge the dictionaries
-            product |= product_data
-            return product, HTTPStatus.OK
-        except KeyError:
-            abort(HTTPStatus.NOT_FOUND, message="Product not found")
+            db.session.add(product)
+            db.session.commit()
+            return product
+        except SQLAlchemyError:
+            abort(HTTPStatus.INTERNAL_SERVER_ERROR, "Deleting is not implemented")
+        return product
 
     def delete(self, product_id):
-        try:
-            del products[product_id]
-            return {"message": "Product deleted successfully"}, HTTPStatus.OK
-        except KeyError:
-            abort(HTTPStatus.NOT_FOUND, message="Product not found")
+        product = ProductModel.query.get_or_404(product_id)
+        db.session.delete(product)
+        db.session.commit()
+        return {"message": "Product deleted successfully"}
 
 
 @blueprint.route("/product")
 class Products(MethodView):
     @blueprint.response(HTTPStatus.OK, ProductSchema(many=True))
     def get(self):
-        return {"products": list(products.values())}
+        products = ProductModel.query.all()
+        return products
 
     @blueprint.arguments(ProductSchema)
     @blueprint.response(HTTPStatus.OK, ProductSchema)
     def post(self, new_product):
-        for product in products.values():
-            if (
-                new_product["name"] == product["name"]
-                and new_product["shop_id"] == product["shop_id"]
-            ):
-                abort(
-                    HTTPStatus.BAD_REQUEST,
-                    message="Product already exists",
-                )
-        product_id = uuid.uuid4().hex
-        product = {**new_product, "id": product_id}
-        products[product_id] = product
+        product = ProductModel(**new_product)
+        try:
+            db.session.add(product)  # this is where the product is added to the session
+            db.session.commit()
+        except IntegrityError:
+            abort(
+                HTTPStatus.BAD_REQUEST, message="Product with this name already exists"
+            )
+        except SQLAlchemyError:
+            abort(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                message="An error occurred while creating the product",
+            )
+
         return product

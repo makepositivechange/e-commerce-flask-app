@@ -1,24 +1,27 @@
 from marshmallow import Schema, fields  # pyright: ignore
 
 
-class ProductSchema(Schema):
+class PlainProductSchema(Schema):
     id = fields.Str(dump_only=True)
     name = fields.Str(required=True)
     price = fields.Float(required=True)
+
+
+class PlainShopSchema(Schema):
+    id = fields.Str(dump_only=True)
+    name = fields.Str(required=True)
+
+
+class ProductSchema(PlainProductSchema):
     shop_id = fields.Str(required=True)
+    shop = fields.List(fields.Nested(PlainShopSchema()), dump_only=True)
 
 
 # this will be used for only incoming requests
 class ProductUpdateSchema(Schema):
     name = fields.Str()
     price = fields.Float()
-    shop_id = fields.Str()
 
 
-class ShopSchema(Schema):
-    id = fields.Str(dump_only=True)
-    name = fields.Str(required=True)
-
-
-class ShopUpdateSchema(Schema):
-    name = fields.Str()
+class ShopSchema(PlainShopSchema):
+    products = fields.List(fields.Nested(PlainProductSchema()), dump_only=True)

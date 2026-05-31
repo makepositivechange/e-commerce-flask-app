@@ -1,2 +1,3 @@
-shops = {}
-products = {}
+from flask_sqlalchemy import SQLAlchemy  # pyright: ignore
+
+db = SQLAlchemy()
