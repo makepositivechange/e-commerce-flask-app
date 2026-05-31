@@ -46,7 +46,7 @@ class Products(MethodView):
         return {"products": list(products.values())}
 
     @blueprint.arguments(ProductSchema)
-    @blueprint.arguments(HTTPStatus.OK, ProductSchema)
+    @blueprint.response(HTTPStatus.OK, ProductSchema)
     def post(self, new_product):
         for product in products.values():
             if (

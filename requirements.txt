@@ -17,3 +17,5 @@ types-MarkupSafe==1.1.10
 types-Werkzeug==1.0.9
 webargs==8.7.1
 Werkzeug==3.1.8
+SQLAlchemy==1.4.50
+flask-sqlalchemy==3.1.0

@@ -31,7 +31,7 @@ class Shop(MethodView):
 class ShopList(MethodView):
     @blueprint.response(HTTPStatus.OK, ShopSchema(many=True))
     def get(self):
-        return {"shops": list(shops.values())}
+        return list(shops.values())
 
     @blueprint.arguments(ShopSchema)
     @blueprint.response(HTTPStatus.CREATED, ShopSchema)
@@ -42,4 +42,4 @@ class ShopList(MethodView):
         shops_id = uuid.uuid4().hex
         shop = {**shop_data, "id": shops_id}
         shops[shops_id] = shop
-        return {"shop": shop}, HTTPStatus.CREATED
+        return shop
