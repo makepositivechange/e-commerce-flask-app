@@ -1,12 +1,14 @@
 import os
 
 from flask import Flask  # pyright: ignore
+from flask_jwt_extended import JWTManager  # pyright: ignore
 from flask_smorest import Api  # pyright: ignore
 
 import models  # noqa: F401
 from db import db
 from resources.product import blueprint as ProductBlueprint
 from resources.shop import blueprint as ShopBlueprint
+from resources.user import blueprint as UserBlueprint
 
 app = Flask(__name__)
 
@@ -20,7 +22,9 @@ app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///shop.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = "learn_with_pratap"
 
+jwt = JWTManager(app)
 
 db.init_app(app)
 
@@ -32,3 +36,4 @@ with app.app_context():
 
 api.register_blueprint(ShopBlueprint)
 api.register_blueprint(ProductBlueprint)
+api.register_blueprint(UserBlueprint)
