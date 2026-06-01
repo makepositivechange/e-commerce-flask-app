@@ -10,10 +10,11 @@ If it does not,
 from http import HTTPStatus
 
 from flask.views import MethodView  # pyright: ignore
-from flask_jwt_extended import create_access_token  # pyright: ignore
+from flask_jwt_extended import create_access_token, get_jwt, jwt_required, get_jwt_identity  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
 from passlib.hash import pbkdf2_sha256  # pyright: ignore
 from schema import UserSchema  # pyright: ignore
+from blacklist import BLACKLIST
 
 from db import db
 from models import UserModel
@@ -52,6 +53,26 @@ class UserLogin(MethodView):
             UserModel.username == user_data["username"]
         ).first()
         if user and pbkdf2_sha256.verify(user_data["password"], user.password):
-            access_token = create_access_token(identity=user.id)
-            return {"access_token": access_token}, HTTPStatus.OK
+            access_token = create_access_token(identity=user.id, fresh=True)
+            refresh_token = create_access_token(identity=user.id)
+            return {"access_token": access_token, "refresh_token": refresh_token}, HTTPStatus.OK
         abort(HTTPStatus.UNAUTHORIZED, message="Invalid username or password")
+
+@blueprint.route("/logout")
+class UserLogout(MethodView):
+    @jwt_required
+    def delete(self):
+        jti = get_jwt()["jti"]
+        BLACKLIST.add(jti)
+        return {"message":"Successfully logged out"}, HTTPStatus.OK
+    
+@blueprint.route("/refresh")
+class TokenRefresh(MethodView):
+    @jwt_required(fresh=True)
+    def post(self):
+        current_user = get_jwt_identity()
+        new_token = create_access_token(identity=current_user, fresh=False)
+        jti = get_jwt()["jti"]
+        BLACKLIST.add(jti)
+
+        return {"access_token": new_token}, HTTPStatus.OK

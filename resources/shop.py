@@ -3,7 +3,7 @@ from http import HTTPStatus
 from flask.views import MethodView  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError  # pyright: ignore
-
+from flask_jwt_extended import jwt_required
 from db import db
 from models import ShopModel
 from schema import ShopSchema
@@ -13,11 +13,13 @@ blueprint = Blueprint("shops", __name__, description="Operations on shops")
 
 @blueprint.route("/shops/<shop_id>")
 class Shop(MethodView):
+    @jwt_required()
     @blueprint.response(HTTPStatus.OK, ShopSchema)
     def get(self, shop_id):
         shop = ShopModel.query.get_or_404(shop_id)
         return shop
 
+    @jwt_required()
     def delete(self, shop_id):
         product = ShopModel.query.get_or_404(shop_id)
         db.session.delete(product)
@@ -27,11 +29,13 @@ class Shop(MethodView):
 
 @blueprint.route("/shop")
 class ShopList(MethodView):
+    @jwt_required()
     @blueprint.response(HTTPStatus.OK, ShopSchema(many=True))
     def get(self):
         shops = ShopModel.query.all()
         return shops
 
+    @jwt_required()
     @blueprint.arguments(ShopSchema)
     @blueprint.response(HTTPStatus.CREATED, ShopSchema)
     def post(self, shop_data):

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from flask.views import MethodView  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError  # pyright: ignore
-
+from flask_jwt_extended import jwt_required
 from db import db
 from models import ProductModel
 from schema import ProductSchema, ProductUpdateSchema
@@ -13,6 +13,7 @@ blueprint = Blueprint("products", __name__, description="Operations on products"
 
 @blueprint.route("/product/<product_id>")
 class Product(MethodView):
+    @jwt_required()
     @blueprint.response(HTTPStatus.OK, ProductSchema)
     def get(self, product_id):
         product = ProductModel.query.get_or_404(product_id)
@@ -21,6 +22,7 @@ class Product(MethodView):
     # Please be careful when we have this decorator as the order is very important
     @blueprint.arguments(ProductUpdateSchema)
     @blueprint.response(HTTPStatus.OK, ProductSchema)
+    @jwt_required()
     def put(self, product_data, product_id):
         product = ProductModel.query.get_or_404(product_id)
         if product:
@@ -36,6 +38,7 @@ class Product(MethodView):
             abort(HTTPStatus.INTERNAL_SERVER_ERROR, "Deleting is not implemented")
         return product
 
+    @jwt_required(fresh=True)
     def delete(self, product_id):
         product = ProductModel.query.get_or_404(product_id)
         db.session.delete(product)
@@ -46,10 +49,12 @@ class Product(MethodView):
 @blueprint.route("/product")
 class Products(MethodView):
     @blueprint.response(HTTPStatus.OK, ProductSchema(many=True))
+    @jwt_required()
     def get(self):
         products = ProductModel.query.all()
         return products
 
+    @jwt_required()
     @blueprint.arguments(ProductSchema)
     @blueprint.response(HTTPStatus.OK, ProductSchema)
     def post(self, new_product):
