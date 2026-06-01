@@ -19,3 +19,4 @@ webargs==8.7.1
 Werkzeug==3.1.8
 flask-sqlalchemy==3.1.0
 flask-jwt-extended==4.6.0
+passlib

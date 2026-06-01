@@ -37,3 +37,6 @@ with app.app_context():
 api.register_blueprint(ShopBlueprint)
 api.register_blueprint(ProductBlueprint)
 api.register_blueprint(UserBlueprint)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

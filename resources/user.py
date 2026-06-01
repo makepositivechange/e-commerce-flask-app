@@ -13,7 +13,7 @@ from flask.views import MethodView  # pyright: ignore
 from flask_jwt_extended import create_access_token  # pyright: ignore
 from flask_smorest import Blueprint, abort  # pyright: ignore
 from passlib.hash import pbkdf2_sha256  # pyright: ignore
-from schemas import UserSchema  # pyright: ignore
+from schema import UserSchema  # pyright: ignore
 
 from db import db
 from models import UserModel
@@ -24,7 +24,7 @@ blueprint = Blueprint("Users", __name__, description="Operations on users")
 @blueprint.route("/register")
 class UserRegister(MethodView):
     @blueprint.arguments(UserSchema)
-    @blueprint.response(HTTPStatus.CREATED, message="User registered successfully")
+    @blueprint.response(HTTPStatus.CREATED)
     def post(self, user_data):
         if UserModel.query.filter(UserModel.username == user_data["username"]).first():
             abort(HTTPStatus.CONFLICT, message="Username already exists")
@@ -34,7 +34,7 @@ class UserRegister(MethodView):
         )
         db.session.add(user)
         db.session.commit()
-        return HTTPStatus.CREATED
+        return "Successfully added user details"
 
 
 @blueprint.route("/user")
